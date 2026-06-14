@@ -3,9 +3,12 @@ import { TsNextProjectCreator } from './TsNextProjectCreator';
 import {
   choicesDependencies, choicesPackageManages,
   choicesTypeScriptModules, choicesTypeScriptTargets,
+  choicesFrameworks,
   defaultTypeScriptModule, defaultTypeScriptTarget,
+  defaultFramework,
   filterCliLibs, filterPackageManager,
-  filterTypeScriptModule, filterTypeScriptTarget
+  filterTypeScriptModule, filterTypeScriptTarget,
+  filterFramework,
 } from './utils';
 
 export async function createTsNext() {
@@ -63,11 +66,18 @@ export async function createTsNext() {
         type   : 'string',
         default: 'npm',
         choices: choicesPackageManages(),
+      },
+      framework        : {
+        alias      : 'f',
+        type       : 'string',
+        description: 'Project framework',
+        default    : defaultFramework,
+        choices    : choicesFrameworks(),
       }
     })
     .parseSync();
 
-  const { name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager } = argv;
+  const { name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager, framework } = argv;
 
   if (name == null) {
     throw new Error('unspecified project name');
@@ -82,5 +92,6 @@ export async function createTsNext() {
     importHelpers, debug, mock,
     install,
     packageManager: filterPackageManager(packageManager),
+    framework     : filterFramework(framework),
   })).startUp();
 }
