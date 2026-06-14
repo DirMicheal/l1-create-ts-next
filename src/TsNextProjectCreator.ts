@@ -19,6 +19,8 @@ export interface CreateTsNextProjectOptions extends ProjectCreatorBasicOptions {
   module: TypeScriptModule,
   importHelpers: boolean,
   libs: DependenciesKey[],
+  docker: boolean,
+  dockerCompose: boolean,
 }
 
 export interface CreateTsNextProjectState extends ProjectCreatorBasicState {
@@ -45,7 +47,7 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
 
   async startUp(): Promise<this> {
     await this.detectPackageCmd();
-    const { name, target, module, importHelpers, libs } = this.options;
+    const { name, target, module, importHelpers, libs, docker, dockerCompose } = this.options;
     terminal(`Create project `).cyan(name);
     terminal(', module: ').green(module);
     terminal(', target: ').green(target);
@@ -59,6 +61,15 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
       terminal(' - ').cyan(lib);
       process.stdout.write('\n');
     });
+
+    if (docker) {
+      terminal('Docker: ').green('enabled');
+      process.stdout.write('\n');
+    }
+    if (dockerCompose) {
+      terminal('Docker Compose: ').green('enabled');
+      process.stdout.write('\n');
+    }
 
     if (this.packageCmd != null) {
       terminal('Packages manager used: ').cyan(this.packageCmd);
@@ -101,6 +112,19 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
 
     terminal.blue(`ts-node src/index.ts`);
     process.stdout.write('\n');
+
+    if (docker) {
+      terminal.blue(`docker build -t ${name} .`);
+      process.stdout.write('\n');
+      terminal.blue(`docker run --rm -p 3000:3000 ${name}`);
+      process.stdout.write('\n');
+    }
+
+    if (dockerCompose) {
+      terminal.blue(`docker compose up -d`);
+      process.stdout.write('\n');
+    }
+
     process.stdout.write('\n');
 
     terminal('Have fun!\n');
@@ -126,6 +150,9 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
         this.state.prettier ? { name: '.prettierrc' } : undefined,
         this.state.swc ? { name: '.swcrc', data: json(generateSWCRC(this.options)) } : undefined,
         this.state.mocha ? { name: '.mocharc.json', data: json(generateMochaRC()) } : undefined,
+        this.options.docker ? { name: 'Dockerfile' } : undefined,
+        this.options.docker ? { name: '.dockerignore' } : undefined,
+        this.options.dockerCompose ? { name: 'docker-compose.yml' } : undefined,
       ],
     };
   }
