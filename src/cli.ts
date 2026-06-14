@@ -4,6 +4,7 @@ import {
   choicesDependencies, choicesPackageManages,
   choicesTypeScriptModules, choicesTypeScriptTargets,
   defaultTypeScriptModule, defaultTypeScriptTarget,
+  choicesFrameworks, defaultFramework, filterFramework,
   filterCliLibs, filterPackageManager,
   filterTypeScriptModule, filterTypeScriptTarget
 } from './utils';
@@ -63,11 +64,18 @@ export async function createTsNext() {
         type   : 'string',
         default: 'npm',
         choices: choicesPackageManages(),
+      },
+      framework        : {
+        alias      : 'f',
+        type       : 'string',
+        description: 'Project framework',
+        default    : defaultFramework,
+        choices    : choicesFrameworks(),
       }
     })
     .parseSync();
 
-  const { name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager } = argv;
+  const { name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager, framework } = argv;
 
   if (name == null) {
     throw new Error('unspecified project name');
@@ -82,5 +90,6 @@ export async function createTsNext() {
     importHelpers, debug, mock,
     install,
     packageManager: filterPackageManager(packageManager),
+    framework     : filterFramework(framework),
   })).startUp();
 }

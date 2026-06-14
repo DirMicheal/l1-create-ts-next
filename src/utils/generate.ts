@@ -3,7 +3,8 @@ import { basename } from 'path';
 import * as ejs from 'ejs';
 import { ProjectCreatorBasicOptions, ProjectStructure } from '../ProjectCreator';
 import { CreateTsNextProjectOptions, CreateTsNextProjectState } from '../TsNextProjectCreator';
-import { generateDependencies } from './lib-deps';
+import { dependenciesMerge, generateDependencies } from './lib-deps';
+import { generateFrameworkDependencies } from './framework';
 import { filterSWCModule, filterSWCTarget } from './ts-vars';
 
 export const convertPackageName = (name: string): string => {
@@ -13,22 +14,35 @@ export const convertPackageName = (name: string): string => {
 
 export const generatePackageInfo = (
   opts: CreateTsNextProjectOptions,
-  { eslint, mocha }: CreateTsNextProjectState
+  { eslint, mocha, react }: CreateTsNextProjectState
 ): Record<string, unknown> => {
-  const scripts: Record<string, string> = {
-    'dev:start': 'ts-node src/index.ts'
-  };
-  if (mocha) {
-    scripts['test'] = 'mocha';
+  const scripts: Record<string, string> = {};
+
+  if (react) {
+    scripts['dev'] = 'vite';
+    scripts['build'] = 'tsc && vite build';
+    scripts['preview'] = 'vite preview';
+    if (eslint) {
+      scripts['lint'] = 'eslint src --ext .ts,.tsx,.js,.jsx';
+    }
+  } else {
+    scripts['dev:start'] = 'ts-node src/index.ts';
+    if (mocha) {
+      scripts['test'] = 'mocha';
+    }
+    if (eslint) {
+      scripts['lint'] = 'eslint src --ext .ts,.tsx,.js,.jsx';
+    }
+    scripts['build'] = [
+      eslint ? 'npm run lint' : null,
+      eslint ? 'npm run test' : null,
+      'tsc'
+    ].filter(Boolean).join(' && ');
   }
-  if (eslint) {
-    scripts['lint'] = 'eslint src --ext .ts,.tsx,.js,.jsx';
-  }
-  scripts['build'] = [
-    eslint ? 'npm run lint' : null,
-    eslint ? 'npm run test' : null,
-    'tsc'
-  ].filter(Boolean).join(' && ');
+
+  const deps = react
+    ? dependenciesMerge(generateDependencies(opts), generateFrameworkDependencies(opts.framework))
+    : generateDependencies(opts);
 
   return {
     'name'       : convertPackageName(opts.name),
@@ -36,11 +50,11 @@ export const generatePackageInfo = (
     'description': '',
     'scripts'    : scripts,
     'engines'    : {
-      'node': '>= 16.0.0'
+      'node': react ? '>= 18.0.0' : '>= 16.0.0'
     },
     'author'     : '',
     'license'    : 'UNLICENSED',
-    ...generateDependencies(opts),
+    ...deps,
   };
 };
 
@@ -48,29 +62,45 @@ export const generateTSConfig = ({
   module,
   target,
   importHelpers,
-}: CreateTsNextProjectOptions, { mocha, tsnode, swc }: CreateTsNextProjectState): Record<string, unknown> => {
-  const types = ['node'];
+}: CreateTsNextProjectOptions, { mocha, tsnode, swc, react }: CreateTsNextProjectState): Record<string, unknown> => {
+  const types: string[] = [];
+  if (!react) {
+    types.push('node');
+  }
   if (mocha) {
     types.push('mocha', 'chai');
   }
+
+  const compilerOptions: Record<string, unknown> = {
+    'target'                : react ? 'ES2020' : target,
+    'module'                : react ? 'ESNext' : module,
+    'strict'                : true,
+    'esModuleInterop'       : true,
+    'experimentalDecorators': true,
+    'emitDecoratorMetadata' : true,
+    'importHelpers'         : importHelpers,
+    'pretty'                : true,
+    'baseUrl'               : './',
+    'types'                 : types,
+  };
+
+  if (react) {
+    compilerOptions['jsx'] = 'react-jsx';
+    compilerOptions['lib'] = ['DOM', 'DOM.Iterable', 'ESNext'];
+    compilerOptions['moduleResolution'] = 'Bundler';
+    compilerOptions['noEmit'] = true;
+    compilerOptions['useDefineForClassFields'] = true;
+    compilerOptions['skipLibCheck'] = true;
+  } else {
+    compilerOptions['declaration'] = true;
+    compilerOptions['rootDir'] = 'src';
+    compilerOptions['outDir'] = 'dist';
+  }
+
   const config: Record<string, unknown> = {
-    'compilerOptions': {
-      'target'                : target,
-      'module'                : module,
-      'strict'                : true,
-      'declaration'           : true,
-      'esModuleInterop'       : true,
-      'experimentalDecorators': true,
-      'emitDecoratorMetadata' : true,
-      'importHelpers'         : importHelpers,
-      'pretty'                : true,
-      'rootDir'               : 'src',
-      'outDir'                : 'dist',
-      'baseUrl'               : './',
-      'types'                 : types
-    },
+    'compilerOptions': compilerOptions,
     'include'        : ['src/**/*'],
-    'exclude'        : ['node_modules', 'src/**/*.spec.ts']
+    'exclude'        : ['node_modules', 'src/**/*.spec.ts'],
   };
   if (tsnode) {
     if (swc) {

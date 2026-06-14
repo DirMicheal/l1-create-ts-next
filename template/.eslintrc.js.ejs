@@ -15,6 +15,9 @@ module.exports = {
   env           : {
     node : true,
     mocha: true,
+<% if (framework === 'react') { -%>
+    browser: true,
+<% } -%>
   },
   ignorePatterns: [
     'node_modules',

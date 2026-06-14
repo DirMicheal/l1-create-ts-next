@@ -6,7 +6,7 @@ import {
   ProjectStructure,
 } from './ProjectCreator';
 import {
-  DependenciesKey, generateMochaRC,
+  DependenciesKey, Framework, generateMochaRC,
   generatePackageInfo, generateSWCRC,
   generateTSConfig,
   installDeps,
@@ -19,6 +19,7 @@ export interface CreateTsNextProjectOptions extends ProjectCreatorBasicOptions {
   module: TypeScriptModule,
   importHelpers: boolean,
   libs: DependenciesKey[],
+  framework: Framework,
 }
 
 export interface CreateTsNextProjectState extends ProjectCreatorBasicState {
@@ -27,6 +28,7 @@ export interface CreateTsNextProjectState extends ProjectCreatorBasicState {
   swc: boolean,
   eslint: boolean,
   prettier: boolean,
+  react: boolean,
 }
 
 const json = (data: Record<string, unknown>): string => JSON.stringify(data, null, 2);
@@ -40,13 +42,15 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
       swc     : opts.libs.indexOf('swc') > -1,
       eslint  : opts.libs.indexOf('eslint') > -1,
       prettier: opts.libs.indexOf('prettier') > -1,
+      react   : opts.framework === 'react',
     });
   }
 
   async startUp(): Promise<this> {
     await this.detectPackageCmd();
-    const { name, target, module, importHelpers, libs } = this.options;
+    const { name, target, module, importHelpers, libs, framework } = this.options;
     terminal(`Create project `).cyan(name);
+    terminal(', framework: ').green(framework);
     terminal(', module: ').green(module);
     terminal(', target: ').green(target);
     if (importHelpers) {
@@ -99,7 +103,11 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
       process.stdout.write('\n');
     }
 
-    terminal.blue(`ts-node src/index.ts`);
+    if (this.state.react) {
+      terminal.blue(`${this.packageCmd ?? 'npm'} run dev`);
+    } else {
+      terminal.blue(`ts-node src/index.ts`);
+    }
     process.stdout.write('\n');
     process.stdout.write('\n');
 
@@ -108,6 +116,7 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
   }
 
   getStructure(): ProjectStructure {
+    const { react } = this.state;
     return {
       name    : '',
       type    : 'dir',
@@ -115,10 +124,12 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
         {
           name    : 'src',
           type    : 'dir',
-          children: [
-            { name: 'index.ts' },
-          ],
+          children: react
+            ? [{ name: 'index.tsx' }, { name: 'App.tsx' }]
+            : [{ name: 'index.ts' }],
         },
+        react ? { name: 'index.html' } : undefined,
+        react ? { name: 'vite.config.ts' } : undefined,
         { name: '.gitignore' },
         { name: 'package.json', data: json(generatePackageInfo(this.options, this.state)) },
         { name: 'tsconfig.json', data: json(generateTSConfig(this.options, this.state)) },
