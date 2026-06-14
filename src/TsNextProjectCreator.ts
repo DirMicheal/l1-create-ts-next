@@ -10,6 +10,7 @@ import {
   generatePackageInfo, generateSWCRC,
   generateTSConfig,
   installDeps,
+  Git,
   TypeScriptModule,
   TypeScriptTarget,
 } from './utils';
@@ -19,6 +20,9 @@ export interface CreateTsNextProjectOptions extends ProjectCreatorBasicOptions {
   module: TypeScriptModule,
   importHelpers: boolean,
   libs: DependenciesKey[],
+  git: boolean,
+  gitBranch?: string,
+  gitCommit: boolean,
 }
 
 export interface CreateTsNextProjectState extends ProjectCreatorBasicState {
@@ -72,6 +76,12 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
     terminal('Project ').cyan(name);
     terminal(' created. ');
 
+    let gitReady = false;
+    if (this.options.git && !this.options.mock) {
+      process.stdout.write('\n');
+      gitReady = await this.initGit();
+    }
+
     let installed = false;
 
     if (this.packageCmd != null) {
@@ -101,10 +111,46 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
 
     terminal.blue(`ts-node src/index.ts`);
     process.stdout.write('\n');
+
+    if (gitReady && this.options.gitCommit) {
+      terminal.blue(`git log`);
+      process.stdout.write('\n');
+    }
+
     process.stdout.write('\n');
 
     terminal('Have fun!\n');
     return this;
+  }
+
+  async initGit(): Promise<boolean> {
+    const { gitBranch, gitCommit } = this.options;
+
+    if (!(await Git.detect())) {
+      terminal('git ').red('not found');
+      terminal(', skip repository initialization.');
+      process.stdout.write('\n');
+      return false;
+    }
+
+    terminal('Initialize git repository');
+    if (gitBranch) {
+      terminal(' on branch ').cyan(gitBranch);
+    }
+    terminal('...');
+    process.stdout.write('\n');
+
+    try {
+      await (new Git(this.projectRoot)).setup({ branch: gitBranch, commit: gitCommit });
+      terminal('Git repository ').green('initialized');
+      process.stdout.write('\n');
+      return true;
+    } catch (e) {
+      terminal('Git initialization ').red('failed');
+      terminal(`: ${e instanceof Error ? e.message : String(e)}`);
+      process.stdout.write('\n');
+      return false;
+    }
   }
 
   getStructure(): ProjectStructure {
