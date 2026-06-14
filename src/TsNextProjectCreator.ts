@@ -19,6 +19,8 @@ export interface CreateTsNextProjectOptions extends ProjectCreatorBasicOptions {
   module: TypeScriptModule,
   importHelpers: boolean,
   libs: DependenciesKey[],
+  docker: boolean,
+  dockerCompose: boolean,
 }
 
 export interface CreateTsNextProjectState extends ProjectCreatorBasicState {
@@ -27,6 +29,8 @@ export interface CreateTsNextProjectState extends ProjectCreatorBasicState {
   swc: boolean,
   eslint: boolean,
   prettier: boolean,
+  docker: boolean,
+  dockerCompose: boolean,
 }
 
 const json = (data: Record<string, unknown>): string => JSON.stringify(data, null, 2);
@@ -35,11 +39,14 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
 
   constructor(opts: CreateTsNextProjectOptions) {
     super(opts, {
-      mocha   : opts.libs.indexOf('mocha') > -1,
-      tsnode  : opts.libs.indexOf('ts-node') > -1,
-      swc     : opts.libs.indexOf('swc') > -1,
-      eslint  : opts.libs.indexOf('eslint') > -1,
-      prettier: opts.libs.indexOf('prettier') > -1,
+      mocha        : opts.libs.indexOf('mocha') > -1,
+      tsnode       : opts.libs.indexOf('ts-node') > -1,
+      swc          : opts.libs.indexOf('swc') > -1,
+      eslint       : opts.libs.indexOf('eslint') > -1,
+      prettier     : opts.libs.indexOf('prettier') > -1,
+      // --docker-compose implies --docker (compose builds from the Dockerfile).
+      docker       : opts.docker || opts.dockerCompose,
+      dockerCompose: opts.dockerCompose,
     });
   }
 
@@ -59,6 +66,15 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
       terminal(' - ').cyan(lib);
       process.stdout.write('\n');
     });
+
+    if (this.state.docker) {
+      terminal('Docker config: ').cyan(
+        this.state.dockerCompose
+          ? 'Dockerfile + .dockerignore + docker-compose.yml'
+          : 'Dockerfile + .dockerignore'
+      );
+      process.stdout.write('\n');
+    }
 
     if (this.packageCmd != null) {
       terminal('Packages manager used: ').cyan(this.packageCmd);
@@ -101,6 +117,23 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
 
     terminal.blue(`ts-node src/index.ts`);
     process.stdout.write('\n');
+
+    if (this.state.docker) {
+      const dockerTag = ((name + '').split(/[\\/]/).filter(Boolean).pop() || 'app')
+        .toLowerCase().replace(/[^a-z0-9_.-]/g, '-');
+      process.stdout.write('\n');
+      terminal('Or containerize it with Docker:\n');
+      if (this.state.dockerCompose) {
+        terminal.blue(`docker compose up --build`);
+        process.stdout.write('\n');
+      } else {
+        terminal.blue(`docker build -t ${dockerTag} .`);
+        process.stdout.write('\n');
+        terminal.blue(`docker run --rm ${dockerTag}`);
+        process.stdout.write('\n');
+      }
+    }
+
     process.stdout.write('\n');
 
     terminal('Have fun!\n');
@@ -126,6 +159,9 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
         this.state.prettier ? { name: '.prettierrc' } : undefined,
         this.state.swc ? { name: '.swcrc', data: json(generateSWCRC(this.options)) } : undefined,
         this.state.mocha ? { name: '.mocharc.json', data: json(generateMochaRC()) } : undefined,
+        this.state.docker ? { name: 'Dockerfile' } : undefined,
+        this.state.docker ? { name: '.dockerignore' } : undefined,
+        this.state.dockerCompose ? { name: 'docker-compose.yml' } : undefined,
       ],
     };
   }

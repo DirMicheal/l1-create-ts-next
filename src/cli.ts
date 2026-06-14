@@ -63,11 +63,25 @@ export async function createTsNext() {
         type   : 'string',
         default: 'npm',
         choices: choicesPackageManages(),
+      },
+      'docker'         : {
+        alias      : 'D',
+        type       : 'boolean',
+        description: 'Generate Docker config (Dockerfile + .dockerignore)',
+        default    : false,
+      },
+      'docker-compose' : {
+        type       : 'boolean',
+        description: 'Generate docker-compose.yml (implies --docker)',
+        default    : false,
       }
     })
     .parseSync();
 
-  const { name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager } = argv;
+  const {
+    name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager,
+    docker, dockerCompose,
+  } = argv;
 
   if (name == null) {
     throw new Error('unspecified project name');
@@ -82,5 +96,6 @@ export async function createTsNext() {
     importHelpers, debug, mock,
     install,
     packageManager: filterPackageManager(packageManager),
+    docker, dockerCompose,
   })).startUp();
 }
