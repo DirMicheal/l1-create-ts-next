@@ -29,10 +29,14 @@
     - `@types/mocha@^9.1.1`
     - `chai@^4.3.6`
     - `@types/chai@^4.3.0`
+6. jest ，可通过命令行参数 `--lib jest` 添加，基于 [ts-jest](https://kulshekhar.github.io/ts-jest/) 整合，原生兼容 TypeScript。
+    - `jest@^29.0.0`
+    - `@types/jest@^29.0.0`
+    - `ts-jest@^29.0.0`
 
 现阶段 `ts-node` x `swc` ，构成了完美的 TypeScript 的本地开发环境，而且开发时完全可以用 `ts-node` x `swc` 直接解释执行，而无需编译。
 
-当通过参数添加了相关库以后，除了在创建项目时自动创建 `package.json` 文件，相关的 `tsconfig.json` `.swcrc` `.mocharc.json` `.gitignore` `.eslintrc.js`
+当通过参数添加了相关库以后，除了在创建项目时自动创建 `package.json` 文件，相关的 `tsconfig.json` `.swcrc` `.mocharc.json` `jest.config.js` `.gitignore` `.eslintrc.js`
 也会根据参数自动添加。
 
 ## 命令行使用
@@ -70,7 +74,7 @@ TS 编译目标，默认 `ES2019` [nodejs@16.0.0](https://node.green/#ES2019)
 
 ### --lib|-l
 
-附加库，可选值 `ts-node|swc|mocha|prettier|all` ，可多项。
+附加库，可选值 `ts-node|swc|mocha|jest|prettier|all` ，可多项。
 
 如果添加相关库，则会在新建的项目中添加相关的文件：
 
@@ -78,6 +82,7 @@ TS 编译目标，默认 `ES2019` [nodejs@16.0.0](https://node.green/#ES2019)
 - **swc** - 添加 `.swcrc` 文件。
     - 如果同时包含 `ts-node` 则在 `tsconfig.json` 文件，增加 `"ts-node": { "swc": true }` 字段。
 - **mocha** - 添加 `.mocharc.json` 文件
+- **jest** - 添加 `jest.config.js` 文件（基于 ts-jest，兼容 TypeScript），并在 `package.json` 的 `scripts` 中添加 `test`（`jest`）。可直接通过 `npm test` 运行测试。
 - **prettier** - 添加 `.prettierrc` 文件
 
 ### --mock|-M
@@ -250,6 +255,12 @@ const TypeScriptDeps: DependenciesDef = {
 ```
 
 ## 更新日志
+
+### 1.0.12
+
+- 增加 `jest` 测试框架支持，可通过 `--lib jest` 添加（`jest@^29` / `@types/jest@^29` / `ts-jest@^29`）。
+    - 新建项目会生成兼容 TypeScript 的 `jest.config.js`（基于 ts-jest preset），并在 `package.json` 添加 `test` 脚本，可直接 `npm test`。
+    - 当同时添加 `mocha` 和 `jest`（如 `-l all`），`test` 脚本以 `jest` 为准。
 
 ### 1.0.9
 
