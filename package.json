@@ -1,0 +1,66 @@
+{
+  "name": "create-ts-next",
+  "version": "1.0.11",
+  "description": "Create next-generation typescript project",
+  "main": "dist/index.js",
+  "bin": {
+    "create-ts-next": "bin/create-ts-next"
+  },
+  "files": [
+    "bin",
+    "template",
+    "dist"
+  ],
+  "scripts": {
+    "dev:basic": "rimraf temp/test1 && ts-node src/cli.test.ts temp/test1 -l all -p pnpm",
+    "dev:mock": "ts-node src/cli.ts temp/test2 --lib all -h",
+    "dev:bin": "rimraf temp/test3 && node bin/create-ts-next temp/test3 -p yarn",
+    "dev:bin-help": "node bin/create-ts-next -h",
+    "cleandir": "rimraf temp/test1 && rimraf temp/test2 && rimraf temp/test3",
+    "test": "mocha src",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
+    "type-check": "tsc --noEmit",
+    "build": "npm run lint && npm run test && rimraf dist && tsc --diagnostics"
+  },
+  "keywords": [
+    "cli",
+    "create-project",
+    "typescript",
+    "swc",
+    "ts-node",
+    "mocha"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/janpoem/create-ts-next"
+  },
+  "author": "Jiankai Zeng <janpoem@163.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@swc/helpers": "^0.4.14",
+    "ejs": "^3.1.9",
+    "terminal-kit": "^2.4.0",
+    "tslib": "^2.4.1",
+    "yargs": "^17.6.2"
+  },
+  "devDependencies": {
+    "@swc/cli": "^0.1.57",
+    "@swc/core": "^1.3.20",
+    "@types/chai": "^4.3.0",
+    "@types/ejs": "^3.1.0",
+    "@types/mocha": "^9.1.0",
+    "@types/node": "^16",
+    "@types/terminal-kit": "^1.28.4",
+    "@types/yargs": "^17",
+    "@typescript-eslint/parser": "^6.2.1",
+    "@typescript-eslint/eslint-plugin": "^6.2.1",
+    "chai": "^4.3.6",
+    "chokidar": "^3.5.3",
+    "eslint": "^8.46.0",
+    "mocha": "^10",
+    "regenerator-runtime": "^0.13.11",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6",
+    "rimraf": "^3.0.2"
+  }
+}
