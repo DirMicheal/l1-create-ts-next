@@ -25,10 +25,14 @@
     - `@swc/core@^1.2.151`
     - `regenerator-runtime@^0.13.9`
 5. mocha ，可通过命令行参数 `--lib mocha` 添加，默认整合 mocha 和 chai。
-    - `mocha@^9.2.1`
-    - `@types/mocha@^9.1.1`
-    - `chai@^4.3.6`
-    - `@types/chai@^4.3.0`
+    - `mocha@^10.2.0`
+    - `@types/mocha@^10.0.1`
+    - `chai@^4.3.7`
+    - `@types/chai@^4.3.5`
+6. jest ，可通过命令行参数 `--lib jest` 添加，默认整合 jest、ts-jest 和 @types/jest。
+    - `jest@^29.0.0`
+    - `@types/jest@^29.0.0`
+    - `ts-jest@^29.0.0`
 
 现阶段 `ts-node` x `swc` ，构成了完美的 TypeScript 的本地开发环境，而且开发时完全可以用 `ts-node` x `swc` 直接解释执行，而无需编译。
 
@@ -70,7 +74,7 @@ TS 编译目标，默认 `ES2019` [nodejs@16.0.0](https://node.green/#ES2019)
 
 ### --lib|-l
 
-附加库，可选值 `ts-node|swc|mocha|prettier|all` ，可多项。
+附加库，可选值 `ts-node|swc|mocha|jest|prettier|all` ，可多项。
 
 如果添加相关库，则会在新建的项目中添加相关的文件：
 
@@ -78,6 +82,7 @@ TS 编译目标，默认 `ES2019` [nodejs@16.0.0](https://node.green/#ES2019)
 - **swc** - 添加 `.swcrc` 文件。
     - 如果同时包含 `ts-node` 则在 `tsconfig.json` 文件，增加 `"ts-node": { "swc": true }` 字段。
 - **mocha** - 添加 `.mocharc.json` 文件
+- **jest** - 添加 `jest.config.js` 文件（使用 `ts-jest` 预设，兼容 TypeScript），`tsconfig.json` 中自动添加 `jest` 类型声明。
 - **prettier** - 添加 `.prettierrc` 文件
 
 ### --mock|-M
@@ -251,6 +256,13 @@ const TypeScriptDeps: DependenciesDef = {
 
 ## 更新日志
 
+### 1.0.12
+
+- 增加 `jest` 测试框架支持，可通过 `--lib jest` 添加
+    - 自动创建 `jest.config.js`（使用 `ts-jest` 预设，兼容 TypeScript）
+    - 自动在 `package.json` 中添加 `"test": "jest"` 脚本
+    - 自动在 `tsconfig.json` 中添加 `jest` 类型声明
+
 ### 1.0.9
 
 - 更新开发所需库版本 `ejs^3`, `mocha^10`
@@ -286,4 +298,4 @@ const TypeScriptDeps: DependenciesDef = {
 
 - 增加参数 `--install|-i` 控制创建项目后，是否自动安装依赖包；
 - 修正生成的 package.json 的项目名称，只使用创建项目的目录名（不包含父路径）；
-- 添加项目的可执行 `scripts` ，增加 `dev:start` `build` `lint`（如果包含 eslint） `test` （如果包含 mocha）。
+- 添加项目的可执行 `scripts` ，增加 `dev:start` `build` `lint`（如果包含 eslint） `test` （如果包含 mocha 或 jest）。

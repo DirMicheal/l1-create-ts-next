@@ -13,12 +13,14 @@ export const convertPackageName = (name: string): string => {
 
 export const generatePackageInfo = (
   opts: CreateTsNextProjectOptions,
-  { eslint, mocha }: CreateTsNextProjectState
+  { eslint, mocha, jest }: CreateTsNextProjectState
 ): Record<string, unknown> => {
   const scripts: Record<string, string> = {
     'dev:start': 'ts-node src/index.ts'
   };
-  if (mocha) {
+  if (jest) {
+    scripts['test'] = 'jest';
+  } else if (mocha) {
     scripts['test'] = 'mocha';
   }
   if (eslint) {
@@ -48,10 +50,13 @@ export const generateTSConfig = ({
   module,
   target,
   importHelpers,
-}: CreateTsNextProjectOptions, { mocha, tsnode, swc }: CreateTsNextProjectState): Record<string, unknown> => {
+}: CreateTsNextProjectOptions, { mocha, jest, tsnode, swc }: CreateTsNextProjectState): Record<string, unknown> => {
   const types = ['node'];
   if (mocha) {
     types.push('mocha', 'chai');
+  }
+  if (jest) {
+    types.push('jest');
   }
   const config: Record<string, unknown> = {
     'compilerOptions': {
@@ -117,6 +122,16 @@ export const generateMochaRC = (): Record<string, unknown> => {
     'spec'      : [
       'src/**/*.spec.ts'
     ]
+  };
+};
+
+export const generateJestConfig = (): Record<string, unknown> => {
+  return {
+    'preset'             : 'ts-jest',
+    'testEnvironment'    : 'node',
+    'roots'              : ['<rootDir>/src'],
+    'testMatch'          : ['**/*.spec.ts', '**/*.test.ts'],
+    'moduleFileExtensions': ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   };
 };
 

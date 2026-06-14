@@ -23,6 +23,7 @@ export interface CreateTsNextProjectOptions extends ProjectCreatorBasicOptions {
 
 export interface CreateTsNextProjectState extends ProjectCreatorBasicState {
   mocha: boolean,
+  jest: boolean,
   tsnode: boolean,
   swc: boolean,
   eslint: boolean,
@@ -36,6 +37,7 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
   constructor(opts: CreateTsNextProjectOptions) {
     super(opts, {
       mocha   : opts.libs.indexOf('mocha') > -1,
+      jest    : opts.libs.indexOf('jest') > -1,
       tsnode  : opts.libs.indexOf('ts-node') > -1,
       swc     : opts.libs.indexOf('swc') > -1,
       eslint  : opts.libs.indexOf('eslint') > -1,
@@ -101,6 +103,12 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
 
     terminal.blue(`ts-node src/index.ts`);
     process.stdout.write('\n');
+
+    if (this.state.jest || this.state.mocha) {
+      terminal.blue(`npm test`);
+      process.stdout.write('\n');
+    }
+
     process.stdout.write('\n');
 
     terminal('Have fun!\n');
@@ -126,6 +134,7 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
         this.state.prettier ? { name: '.prettierrc' } : undefined,
         this.state.swc ? { name: '.swcrc', data: json(generateSWCRC(this.options)) } : undefined,
         this.state.mocha ? { name: '.mocharc.json', data: json(generateMochaRC()) } : undefined,
+        this.state.jest ? { name: 'jest.config.js' } : undefined,
       ],
     };
   }

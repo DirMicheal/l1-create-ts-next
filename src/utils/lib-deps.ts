@@ -44,6 +44,13 @@ const Dependencies: Record<string, DependenciesDef> = {
       '@types/chai' : '^4.3.5',
     },
   },
+  jest     : {
+    devDependencies: {
+      'jest'       : '^29.0.0',
+      '@types/jest': '^29.0.0',
+      'ts-jest'    : '^29.0.0',
+    },
+  },
   prettier : {
     devDependencies: {
       'prettier'       : '^3.0.1'
