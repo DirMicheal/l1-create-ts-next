@@ -63,11 +63,26 @@ export async function createTsNext() {
         type   : 'string',
         default: 'npm',
         choices: choicesPackageManages(),
-      }
+      },
+      'git'            : {
+        alias      : 'g',
+        type       : 'boolean',
+        description: 'Initialize a git repository',
+        default    : false,
+      },
+      'git-branch'     : {
+        type       : 'string',
+        description: 'Set the initial branch name for the git repository',
+      },
+      'git-commit'     : {
+        type       : 'boolean',
+        description: 'Create an initial commit after project creation',
+        default    : true,
+      },
     })
     .parseSync();
 
-  const { name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager } = argv;
+  const { name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager, git, gitBranch, gitCommit } = argv;
 
   if (name == null) {
     throw new Error('unspecified project name');
@@ -82,5 +97,8 @@ export async function createTsNext() {
     importHelpers, debug, mock,
     install,
     packageManager: filterPackageManager(packageManager),
+    git,
+    gitBranch,
+    gitCommit,
   })).startUp();
 }

@@ -10,6 +10,7 @@ import {
   generatePackageInfo, generateSWCRC,
   generateTSConfig,
   installDeps,
+  isGitInstalled, gitInit, gitInitialCommit,
   TypeScriptModule,
   TypeScriptTarget,
 } from './utils';
@@ -19,6 +20,9 @@ export interface CreateTsNextProjectOptions extends ProjectCreatorBasicOptions {
   module: TypeScriptModule,
   importHelpers: boolean,
   libs: DependenciesKey[],
+  git?: boolean,
+  gitBranch?: string,
+  gitCommit?: boolean,
 }
 
 export interface CreateTsNextProjectState extends ProjectCreatorBasicState {
@@ -82,6 +86,32 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
         installed = true;
       } catch (e) {
         //
+      }
+    }
+
+    if (this.options.git && !this.options.mock) {
+      const gitAvailable = await isGitInstalled();
+      if (gitAvailable) {
+        process.stdout.write('\n');
+        terminal('Initializing git repository...');
+        process.stdout.write('\n');
+        try {
+          await gitInit(this.projectRoot, this.options.gitBranch);
+          terminal('Git repository initialized.');
+          process.stdout.write('\n');
+          if (this.options.gitCommit !== false) {
+            await gitInitialCommit(this.projectRoot);
+            terminal('Initial commit created.');
+            process.stdout.write('\n');
+          }
+        } catch (e) {
+          terminal.yellow('Warning: Failed to initialize git repository.');
+          process.stdout.write('\n');
+        }
+      } else {
+        process.stdout.write('\n');
+        terminal.yellow('Warning: Git is not installed. Skipping git initialization.');
+        process.stdout.write('\n');
       }
     }
 
