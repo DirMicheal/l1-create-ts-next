@@ -38,6 +38,11 @@ export async function createTsNext() {
         description: 'With libs',
         default    : true,
       },
+      'husky'          : {
+        type       : 'boolean',
+        description: 'Setup Husky git hooks (pre-commit lint-staged + commit-msg check)',
+        default    : false,
+      },
       'lib'            : {
         alias  : 'l',
         type   : 'array',
@@ -67,18 +72,24 @@ export async function createTsNext() {
     })
     .parseSync();
 
-  const { name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager } = argv;
+  const { name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager, husky } = argv;
 
   if (name == null) {
     throw new Error('unspecified project name');
   }
   const _name = name + '';
 
+  // husky implies eslint so the pre-commit lint check always has a linter available.
+  const libs = filterCliLibs(eslint || husky, lib);
+  if (husky) {
+    libs.push('husky');
+  }
+
   await (new TsNextProjectCreator({
     name          : _name,
     target        : filterTypeScriptTarget(target),
     module        : filterTypeScriptModule(module),
-    libs          : filterCliLibs(eslint, lib),
+    libs,
     importHelpers, debug, mock,
     install,
     packageManager: filterPackageManager(packageManager),

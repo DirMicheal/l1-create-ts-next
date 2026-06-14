@@ -49,6 +49,12 @@ const Dependencies: Record<string, DependenciesDef> = {
       'prettier'       : '^3.0.1'
     },
   },
+  husky    : {
+    devDependencies: {
+      'husky'      : '^8.0.0',
+      'lint-staged': '^13.0.0',
+    },
+  },
 } as const;
 
 const DependenciesHelpers: Record<string, DependenciesDef> = {
@@ -66,7 +72,10 @@ const DependenciesHelpers: Record<string, DependenciesDef> = {
 
 export type DependenciesKey = keyof typeof Dependencies;
 
-const depLibs = Object.keys(Dependencies).slice(2);
+// libs toggled via dedicated flags (--eslint, --husky) instead of --lib
+const reservedLibs: string[] = ['typescript', 'eslint', 'husky'];
+
+const depLibs = Object.keys(Dependencies).filter((key) => reservedLibs.indexOf(key) < 0);
 
 export const choicesDependencies = depLibs.concat('all');
 

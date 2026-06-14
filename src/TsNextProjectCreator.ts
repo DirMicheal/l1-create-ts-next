@@ -1,3 +1,5 @@
+import { join } from 'path';
+import { chmodSync } from 'fs';
 import { terminal } from 'terminal-kit';
 import {
   ProjectCreator,
@@ -27,6 +29,7 @@ export interface CreateTsNextProjectState extends ProjectCreatorBasicState {
   swc: boolean,
   eslint: boolean,
   prettier: boolean,
+  husky: boolean,
 }
 
 const json = (data: Record<string, unknown>): string => JSON.stringify(data, null, 2);
@@ -40,7 +43,23 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
       swc     : opts.libs.indexOf('swc') > -1,
       eslint  : opts.libs.indexOf('eslint') > -1,
       prettier: opts.libs.indexOf('prettier') > -1,
+      husky   : opts.libs.indexOf('husky') > -1,
     });
+  }
+
+  initHusky(): this {
+    if (!this.state.husky || this.options.mock) {
+      return this;
+    }
+    // Git hook files must be executable for git to run them (chmod is a no-op on Windows).
+    ['pre-commit', 'commit-msg'].forEach((hook) => {
+      try {
+        chmodSync(join(this.projectRoot, '.husky', hook), 0o755);
+      } catch (e) {
+        // best-effort: hooks are still wired by the `prepare` script during install
+      }
+    });
+    return this;
   }
 
   async startUp(): Promise<this> {
@@ -67,6 +86,7 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
 
     process.stdout.write('\n');
     this.create(this.getStructure());
+    this.initHusky();
     process.stdout.write('\n');
 
     terminal('Project ').cyan(name);
@@ -126,6 +146,14 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
         this.state.prettier ? { name: '.prettierrc' } : undefined,
         this.state.swc ? { name: '.swcrc', data: json(generateSWCRC(this.options)) } : undefined,
         this.state.mocha ? { name: '.mocharc.json', data: json(generateMochaRC()) } : undefined,
+        this.state.husky ? {
+          name    : '.husky',
+          type    : 'dir',
+          children: [
+            { name: 'pre-commit', ignoreTpl: true },
+            { name: 'commit-msg', ignoreTpl: true },
+          ],
+        } : undefined,
       ],
     };
   }

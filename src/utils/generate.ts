@@ -13,7 +13,7 @@ export const convertPackageName = (name: string): string => {
 
 export const generatePackageInfo = (
   opts: CreateTsNextProjectOptions,
-  { eslint, mocha }: CreateTsNextProjectState
+  { eslint, mocha, prettier, husky }: CreateTsNextProjectState
 ): Record<string, unknown> => {
   const scripts: Record<string, string> = {
     'dev:start': 'ts-node src/index.ts'
@@ -29,8 +29,13 @@ export const generatePackageInfo = (
     eslint ? 'npm run test' : null,
     'tsc'
   ].filter(Boolean).join(' && ');
+  if (husky) {
+    // `prepare` runs on `npm install`; `husky install` sets .husky as core.hooksPath.
+    // `|| true` keeps install from failing when there is no git repo yet (husky <= v8 exits non-zero).
+    scripts['prepare'] = 'husky install || true';
+  }
 
-  return {
+  const pkg: Record<string, unknown> = {
     'name'       : convertPackageName(opts.name),
     'version'    : '1.0.0',
     'description': '',
@@ -42,6 +47,22 @@ export const generatePackageInfo = (
     'license'    : 'UNLICENSED',
     ...generateDependencies(opts),
   };
+
+  if (husky) {
+    // husky implies eslint (enforced in cli.ts), so there is always a linter to run.
+    const lintStagedTasks: string[] = [];
+    if (eslint) {
+      lintStagedTasks.push('eslint --fix');
+    }
+    if (prettier) {
+      lintStagedTasks.push('prettier --write');
+    }
+    pkg['lint-staged'] = {
+      '*.{ts,tsx,js,jsx}': lintStagedTasks,
+    };
+  }
+
+  return pkg;
 };
 
 export const generateTSConfig = ({
