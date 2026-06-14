@@ -13,7 +13,7 @@ export const convertPackageName = (name: string): string => {
 
 export const generatePackageInfo = (
   opts: CreateTsNextProjectOptions,
-  { eslint, mocha }: CreateTsNextProjectState
+  { eslint, mocha, husky }: CreateTsNextProjectState
 ): Record<string, unknown> => {
   const scripts: Record<string, string> = {
     'dev:start': 'ts-node src/index.ts'
@@ -24,13 +24,16 @@ export const generatePackageInfo = (
   if (eslint) {
     scripts['lint'] = 'eslint src --ext .ts,.tsx,.js,.jsx';
   }
+  if (husky) {
+    scripts['prepare'] = 'husky install';
+  }
   scripts['build'] = [
     eslint ? 'npm run lint' : null,
     eslint ? 'npm run test' : null,
     'tsc'
   ].filter(Boolean).join(' && ');
 
-  return {
+  const pkg: Record<string, unknown> = {
     'name'       : convertPackageName(opts.name),
     'version'    : '1.0.0',
     'description': '',
@@ -42,6 +45,15 @@ export const generatePackageInfo = (
     'license'    : 'UNLICENSED',
     ...generateDependencies(opts),
   };
+
+  if (husky) {
+    pkg['lint-staged'] = {
+      '*.{ts,tsx,js,jsx}': eslint ? ['eslint --fix', 'prettier --write'] : ['prettier --write'],
+      '*.{json,md,yml,yaml}': ['prettier --write'],
+    };
+  }
+
+  return pkg;
 };
 
 export const generateTSConfig = ({

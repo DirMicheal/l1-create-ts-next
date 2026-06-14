@@ -38,6 +38,12 @@ export async function createTsNext() {
         description: 'With libs',
         default    : true,
       },
+      'husky'          : {
+        alias      : 'g',
+        type       : 'boolean',
+        description: 'Enable Husky Git Hooks',
+        default    : false,
+      },
       'lib'            : {
         alias  : 'l',
         type   : 'array',
@@ -67,7 +73,7 @@ export async function createTsNext() {
     })
     .parseSync();
 
-  const { name, target, module, importHelpers, lib, eslint, debug, mock, install, packageManager } = argv;
+  const { name, target, module, importHelpers, lib, eslint, husky, debug, mock, install, packageManager } = argv;
 
   if (name == null) {
     throw new Error('unspecified project name');
@@ -78,7 +84,7 @@ export async function createTsNext() {
     name          : _name,
     target        : filterTypeScriptTarget(target),
     module        : filterTypeScriptModule(module),
-    libs          : filterCliLibs(eslint, lib),
+    libs          : filterCliLibs(eslint, husky, lib),
     importHelpers, debug, mock,
     install,
     packageManager: filterPackageManager(packageManager),

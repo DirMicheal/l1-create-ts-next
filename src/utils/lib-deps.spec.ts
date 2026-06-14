@@ -5,30 +5,30 @@ describe('dependencies', function () {
 
   describe('filterCliLibs', function () {
     it('contain eslint', () => {
-      const libs = filterCliLibs(true);
+      const libs = filterCliLibs(true, false);
       expect(libs).to.contain('typescript');
       expect(libs).to.contain('eslint');
     });
 
     it('not contain eslint', () => {
-      const libs = filterCliLibs(false);
+      const libs = filterCliLibs(false, false);
       expect(libs).to.contain('typescript');
       expect(libs).to.not.contain('eslint');
     });
 
     it('contain swc', () => {
-      const libs = filterCliLibs(false, ['swc']);
+      const libs = filterCliLibs(false, false, ['swc']);
       expect(libs).to.contain('swc');
       expect(libs).to.not.contain('eslint');
     });
 
     it('contain ts-node', () => {
-      const libs = filterCliLibs(true, ['ts-node']);
+      const libs = filterCliLibs(true, false, ['ts-node']);
       expect(libs).to.contain('ts-node');
     });
 
     it('all', () => {
-      const libs = filterCliLibs(true, ['ts-node', 'swc']);
+      const libs = filterCliLibs(true, false, ['ts-node', 'swc']);
       expect(libs).to.contain('typescript');
       expect(libs).to.contain('eslint');
       expect(libs).to.contain('ts-node');
@@ -36,9 +36,16 @@ describe('dependencies', function () {
     });
 
     it('add undefined lib', () => {
-      const libs = filterCliLibs(true, ['test']);
+      const libs = filterCliLibs(true, false, ['test']);
       expect(libs).to.contain('typescript');
       expect(libs).to.not.contain('test');
+    });
+
+    it('contain husky', () => {
+      const libs = filterCliLibs(true, true);
+      expect(libs).to.contain('typescript');
+      expect(libs).to.contain('eslint');
+      expect(libs).to.contain('husky');
     });
   });
 

@@ -1,4 +1,7 @@
 import { terminal } from 'terminal-kit';
+import { join } from 'path';
+import { chmodSync } from 'fs';
+import { platform } from 'os';
 import {
   ProjectCreator,
   ProjectCreatorBasicOptions,
@@ -27,6 +30,7 @@ export interface CreateTsNextProjectState extends ProjectCreatorBasicState {
   swc: boolean,
   eslint: boolean,
   prettier: boolean,
+  husky: boolean,
 }
 
 const json = (data: Record<string, unknown>): string => JSON.stringify(data, null, 2);
@@ -40,6 +44,7 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
       swc     : opts.libs.indexOf('swc') > -1,
       eslint  : opts.libs.indexOf('eslint') > -1,
       prettier: opts.libs.indexOf('prettier') > -1,
+      husky   : opts.libs.indexOf('husky') > -1,
     });
   }
 
@@ -67,6 +72,17 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
 
     process.stdout.write('\n');
     this.create(this.getStructure());
+
+    // Make husky hooks executable on Unix systems
+    if (this.state.husky && platform() !== 'win32' && !this.options.mock) {
+      try {
+        chmodSync(join(this.projectRoot, '.husky', 'pre-commit'), 0o755);
+        chmodSync(join(this.projectRoot, '.husky', 'commit-msg'), 0o755);
+      } catch (e) {
+        // Ignore chmod errors
+      }
+    }
+
     process.stdout.write('\n');
 
     terminal('Project ').cyan(name);
@@ -119,6 +135,14 @@ export class TsNextProjectCreator extends ProjectCreator<CreateTsNextProjectOpti
             { name: 'index.ts' },
           ],
         },
+        this.state.husky ? {
+          name    : '.husky',
+          type    : 'dir',
+          children: [
+            { name: 'pre-commit', ignoreTpl: true },
+            { name: 'commit-msg', ignoreTpl: true },
+          ],
+        } : undefined,
         { name: '.gitignore' },
         { name: 'package.json', data: json(generatePackageInfo(this.options, this.state)) },
         { name: 'tsconfig.json', data: json(generateTSConfig(this.options, this.state)) },

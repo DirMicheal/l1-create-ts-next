@@ -49,6 +49,12 @@ const Dependencies: Record<string, DependenciesDef> = {
       'prettier'       : '^3.0.1'
     },
   },
+  husky    : {
+    devDependencies: {
+      'husky'      : '^8.0.0',
+      'lint-staged': '^13.0.0',
+    },
+  },
 } as const;
 
 const DependenciesHelpers: Record<string, DependenciesDef> = {
@@ -70,10 +76,13 @@ const depLibs = Object.keys(Dependencies).slice(2);
 
 export const choicesDependencies = depLibs.concat('all');
 
-export const filterCliLibs = (eslint: boolean, libs?: (string | number | null)[] | null): DependenciesKey[] => {
+export const filterCliLibs = (eslint: boolean, husky: boolean, libs?: (string | number | null)[] | null): DependenciesKey[] => {
   const res: string[] = ['typescript'];
   if (eslint) {
     res.push('eslint');
+  }
+  if (husky) {
+    res.push('husky');
   }
   if (Array.isArray(libs) && libs.length > 0) {
     if (libs.indexOf('all') > -1) {
